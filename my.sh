@@ -6,9 +6,13 @@ ALIASES=$@
 KEY=$(mktemp -u -p /etc/letsencrypt/archive/$DOMAIN/ XXX)
 
 openssl genrsa 4096 > $KEY.key
-if [ "$ALIAS" ]; then
-   openssl req -new -sha256 -key $KEY.key -subj "/" -reqexts SAN -config <(cat /etc/pki/tls/openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:$ALIAS,DNS:$DOMAIN")) > $KEY.csr
-else 
+if [ "$ALIASES" ]; then
+   ALT=""
+   for it in $ALIASES; do
+     ALT="DNS:$it,$ALT"
+   done
+   openssl req -new -sha256 -key $KEY.key -subj "/" -reqexts SAN -config <(cat /etc/pki/tls/openssl.cnf <(printf "[SAN]\nsubjectAltName=${ALT}DNS:$DOMAIN")) > $KEY.csr
+else
   openssl req -new -sha256 -key $KEY.key -subj "/CN=$DOMAIN" > $KEY.csr
 fi
 python /root/acme-tiny/acme_tiny.py --account-key /root/acme-tiny/account.key --csr $KEY.csr --acme-dir /var/www/html/.well-known/acme-challenge/ > $KEY-cert.pem || exit
