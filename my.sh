@@ -3,6 +3,7 @@
 DOMAIN=$1
 shift
 ALIASES=$@
+mkdir -p /etc/letsencrypt/archive/$DOMAIN/
 KEY=$(mktemp -u -p /etc/letsencrypt/archive/$DOMAIN/ XXX)
 
 openssl genrsa 4096 > $KEY.key
@@ -20,6 +21,7 @@ python /root/acme-tiny/acme_tiny.py --account-key /root/acme-tiny/account.key --
 cat $KEY-cert.pem /tmp/intermediate.pem > $KEY-fullchain.pem
 
 if [ -f $KEY-fullchain.pem ]; then
+  mkdir -p /etc/letsencrypt/live/$DOMAIN/
   rm -f /etc/letsencrypt/live/$DOMAIN/*.pem
   ln -s $KEY.key /etc/letsencrypt/live/$DOMAIN/privkey.pem
   ln -s $KEY-cert.pem /etc/letsencrypt/live/$DOMAIN/cert.pem
